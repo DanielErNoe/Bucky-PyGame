@@ -148,6 +148,7 @@ class Shotgun(pygame.sprite.Sprite):
     def draw(self, win):
         win.blit(self.SPRITE, (self.rect.x, self.rect.y))
 
+
 class Bullet():
     SPRITE = pygame.image.load(join("assets", "Items", "Bullet", "Bullet.png")).convert_alpha()
 
@@ -156,6 +157,29 @@ class Bullet():
         self.rect = pygame.Rect(x, y, width, height)
         self.SPRITE = pygame.transform.scale(self.SPRITE, (width, height))
     
+    def handle_bullets(self, bullet_amount, bullet_size, player, bullet, bullets):
+        
+        if len(bullets) < bullet_amount:
+            for i in range(bullet_amount):
+                bullet_x = random.randint(0, WIDTH)
+                bullet_y = random.randint(0, HEIGHT)
+            
+                distance_ok = all(math.sqrt((bullet_x - bullet.rect.x)**2 + (bullet_y - bullet.rect.y)**2) > 20 for bullet in bullets)
+            
+                if distance_ok:
+                    bullets.append(Bullet(bullet_x, bullet_y, bullet_size, bullet_size))
+                    
+        bullets_to_remove = []
+        for bullet in bullets:
+            if bullet.rect.colliderect(player.rect):
+                bullets_to_remove.append(bullet)
+        for bullet in bullets_to_remove:
+            bullets.remove(bullet)
+            player.bullet_count += 1
+        
+        
+        return bullets
+            
     def draw(self, win):
         win.blit(self.SPRITE, (self.rect))
         
@@ -180,7 +204,7 @@ def handle_border(player):
         
     if player.rect.x < 0:
         player.rect.x = WIDTH
-
+        
 
 def draw(window, background, bg_image, player, shotgun, bullets):
     for tile in background:
@@ -191,36 +215,23 @@ def draw(window, background, bg_image, player, shotgun, bullets):
 
     player.draw(window)
     shotgun.draw(window)
-    #bullet.draw(window)
     
     pygame.display.update()
 
-# def control():
-#     print(f"x:{xVerdi} y:{yVerdi} b:{bVerdi}")
 
 def main(window):
     clock = pygame.time.Clock()
     background, bg_image = get_background("Blue.png")
 
     offset_x, offset_y = 25, 22
-    shotgun_size, bullet_size = 40, 40
+    bullet_size = 40
     bullet_amount = 2
     
     player = Player(100, 100, 50, 50)
     shotgun = Shotgun(player.rect.x, player.rect.y, 50, 50)
     bullet = Bullet(200, 200, 40, 40)
-    #bullets = [bullet, Bullet(10, 10, shotgun_size, shotgun_size), Bullet(200, 100, shotgun_size, shotgun_size)]
     bullets = []
     
-    
-    for i in range(bullet_amount):
-        bullet_x = random.randint(0, WIDTH)
-        bullet_y = random.randint(0, HEIGHT)
-        
-        distance_ok = all(math.sqrt((bullet_x - bullet.rect.x)**2 + (bullet_y - bullet.rect.y)**2) > 20 for b in bullets)
-        
-        if distance_ok:
-            bullets.append(Bullet(bullet_x, bullet_y, bullet_size, bullet_size))
 
     run = True
     while run:
@@ -239,24 +250,11 @@ def main(window):
         player.loop(FPS)
         shotgun.loop(player.rect, offset_x, offset_y)
         handle_border(player)
+        bullets = bullet.handle_bullets(bullet_amount, bullet_size, player, bullet, bullets)
         #shotgun.rotate_sprite(player.angle)
         draw(window, background, bg_image, player, shotgun, bullets)
-
-        bullets_to_remove = []
-        for bullet in bullets:
-            if bullet.rect.colliderect(player.rect):
-                bullets_to_remove.append(bullet)
-        for bullet in bullets_to_remove:
-            bullets.remove(bullet)
-            player.bullet_count += 1
-            #bullet_amount -= 1
         
-        #print(player.bullet_count)
-        #print(bullet_amount)
-        print(f"Bullet list len: {len(bullets)}")
-        print(bullets)
-            
-
+        
     pygame.quit()
     quit()
 
