@@ -176,6 +176,7 @@ class Bullet():
         for bullet in bullets_to_remove:
             bullets.remove(bullet)
             player.bullet_count += 1
+            handle_score()
         
         
         return bullets
@@ -183,6 +184,19 @@ class Bullet():
     def draw(self, win):
         win.blit(self.SPRITE, (self.rect))
         
+
+def handle_border(player):
+    if player.rect.x > WIDTH:
+        player.rect.x = 0
+        
+    if player.rect.x < 0:
+        player.rect.x = WIDTH
+        
+
+def handle_score():
+    global score
+    score += 1
+    
 
 
 def get_background(name):
@@ -196,16 +210,8 @@ def get_background(name):
             tiles.append(pos)
     
     return tiles, image
-
-
-def handle_border(player):
-    if player.rect.x > WIDTH:
-        player.rect.x = 0
         
-    if player.rect.x < 0:
-        player.rect.x = WIDTH
         
-
 def draw(window, background, bg_image, player, shotgun, bullets):
     for tile in background:
         window.blit(bg_image, tile)
@@ -215,6 +221,10 @@ def draw(window, background, bg_image, player, shotgun, bullets):
 
     player.draw(window)
     shotgun.draw(window)
+    
+    score_text = font.render(f"Score: {str(score)}", True, (255, 255, 255))
+    text_rect = score_text.get_rect(topright = (WIDTH - 10, 10))
+    window.blit(score_text, text_rect)
     
     pygame.display.update()
 
@@ -226,6 +236,8 @@ def main(window):
     offset_x, offset_y = 25, 22
     bullet_size = 40
     bullet_amount = 2
+    global score
+    score = 0
     
     player = Player(100, 100, 50, 50)
     shotgun = Shotgun(player.rect.x, player.rect.y, 50, 50)
@@ -253,6 +265,7 @@ def main(window):
         bullets = bullet.handle_bullets(bullet_amount, bullet_size, player, bullet, bullets)
         #shotgun.rotate_sprite(player.angle)
         draw(window, background, bg_image, player, shotgun, bullets)
+        #print(f"score: {score}")
         
         
     pygame.quit()
