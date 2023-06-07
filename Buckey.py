@@ -261,7 +261,7 @@ def get_background(name):
     return tiles, image
         
         
-def draw(window, background, bg_image, player, shotgun, bullets, start_screen, controller_button, mouse_button):
+def draw(window, background, bg_image, player, shotgun, bullets, start_screen, controller_button, mouse_button, exit_button):
     for tile in background:
         window.blit(bg_image, tile)
         
@@ -283,6 +283,8 @@ def draw(window, background, bg_image, player, shotgun, bullets, start_screen, c
             player.game_mode = "controller"
         if mouse_button.draw(window):
             player.game_mode = "mouse"
+        if exit_button.draw(window):
+            pygame.quit()
     
     pygame.display.update()
 
@@ -304,9 +306,11 @@ def main(window):
     
     controller_img = get_button("controller_btn.png")
     mouse_img = get_button("mouse_btn.png")
+    exit_img = get_button("exit_btn.png")
 
     controller_button = Button(100, 150, controller_img, 5)
     mouse_button = Button(100, 300, mouse_img, 5)
+    exit_button = Button(100, 450, exit_img, 0.7)
 
     run = True
     while run:
@@ -331,7 +335,7 @@ def main(window):
         handle_border(player)
         bullets = bullet.handle_bullets(bullet_amount, bullet_size, player, bullet, bullets)
         #shotgun.rotate_sprite(player.angle)
-        draw(window, background, bg_image, player, shotgun, bullets, start_screen, controller_button, mouse_button)
+        draw(window, background, bg_image, player, shotgun, bullets, start_screen, controller_button, mouse_button, exit_button)
         #print(f"score: {score}")
 
         # if start_screen:
@@ -342,7 +346,6 @@ def main(window):
             
             
     pygame.quit()
-    quit()
 
 if __name__ == "__main__":
     main(window)
