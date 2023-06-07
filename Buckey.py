@@ -12,7 +12,7 @@ pygame.init()
 
 pygame.display.set_caption("BuckShot")
 
-WIDTH, HEIGHT = 500, 600
+WIDTH, HEIGHT = 500, 700
 FPS = 60
 PLAYER_VEL = 7
 
@@ -62,6 +62,7 @@ class Player(pygame.sprite.Sprite):
         self.hit_count = 0
         self.start_time = time.time()
         self.angle = 0
+        self.game_mode = "mouse"
 
     def jump(self):
         self.y_vel = -self.GRAVITY * 8
@@ -85,6 +86,7 @@ class Player(pygame.sprite.Sprite):
         
         self.bullet_count -= 1
 
+        print(self.game_mode)
         #print(PLAYER_VEL * math.cos(math.radians(angle)), PLAYER_VEL * math.sin(math.radians(angle)) * -1, angle, self.rect.x, player_pos)
 
     def reset(self):
@@ -203,7 +205,36 @@ class Bullet():
     def draw(self, win):
         win.blit(self.SPRITE, (self.rect))
 
-      
+
+class Button():
+    def __init__(self, x, y, image, scale):
+        width = image.get_width()
+        height = image.get_height()
+        self.image = pygame.transform.scale(image, (int(width * scale), int(height * scale)))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+        self.clicked = False
+    
+    def draw(self, win):
+        action = False
+
+        mouse_pos = pygame.mouse.get_pos()
+
+        if self.rect.collidepoint(mouse_pos):
+            if pygame.mouse.get_pressed()[0] and not self.clicked:
+                self.clicked = True
+                action = True
+        
+        if not pygame.mouse.get_pressed()[0]:
+            self.clicked = False
+
+        win.blit(self.image, (self.rect.x, self.rect.y))
+
+        return action
+    
+def get_button(name):
+    image = pygame.image.load(join("assets", "Menu", "Buttons", name)).convert_alpha()
+    return image      
 
 def handle_border(player):
     if player.rect.x > WIDTH:
@@ -240,7 +271,7 @@ def get_background(name):
     return tiles, image
         
         
-def draw(window, background, bg_image, player, shotgun, bullets, start_screen):
+def draw(window, background, bg_image, player, shotgun, bullets, start_screen, controller_button, mouse_button):
     for tile in background:
         window.blit(bg_image, tile)
         
@@ -257,6 +288,12 @@ def draw(window, background, bg_image, player, shotgun, bullets, start_screen):
     window.blit(score_text, text_rect)
     
     draw_start_screen(window, start_screen, "Press SPACE to start", (255, 255, 255))
+    
+    if start_screen:
+        if controller_button.draw(window):
+            player.game_mode = "controller"
+        if mouse_button.draw(window):
+            player.game_mode = "mouse"
     
     pygame.display.update()
 
@@ -278,6 +315,11 @@ def main(window):
     bullet = Bullet(200, 200, 40, 40)
     bullets = []
     
+    controller_img = get_button("controller_btn.png")
+    mouse_img = get_button("mouse_btn.png")
+
+    controller_button = Button(100, 150, controller_img, 5)
+    mouse_button = Button(100, 300, mouse_img, 5)
 
     run = True
     while run:
@@ -305,7 +347,7 @@ def main(window):
         handle_border(player)
         bullets = bullet.handle_bullets(bullet_amount, bullet_size, player, bullet, bullets)
         #shotgun.rotate_sprite(player.angle)
-        draw(window, background, bg_image, player, shotgun, bullets, start_screen)
+        draw(window, background, bg_image, player, shotgun, bullets, start_screen, controller_button, mouse_button)
         #print(f"score: {score}")
 
         # if start_screen:
