@@ -58,8 +58,6 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0
         self.jump_count = 0
         self.bullet_count = 3
-        self.hit = False
-        self.hit_count = 0
         self.start_time = time.time()
         self.angle = 0
         self.game_mode = "mouse"
@@ -86,7 +84,7 @@ class Player(pygame.sprite.Sprite):
         
         self.bullet_count -= 1
 
-        print(self.game_mode)
+        #print(self.game_mode)
         #print(PLAYER_VEL * math.cos(math.radians(angle)), PLAYER_VEL * math.sin(math.radians(angle)) * -1, angle, self.rect.x, player_pos)
 
     def reset(self):
@@ -121,9 +119,7 @@ class Player(pygame.sprite.Sprite):
 
     def update_sprite(self):
         sprite_sheet = "idle"
-        if self.hit:
-            sprite_sheet = "hit"
-        elif self.y_vel < 0:
+        if self.y_vel < 0:
             if self.jump_count == 1:
                 sprite_sheet = "jump"
             elif self.jump_count == 2:
@@ -250,13 +246,7 @@ def handle_border(player):
 def handle_score():
     global score
     score += 1
-    
-def draw_start_screen(window, start_screen, text, text_color):
-    if start_screen:
-        window.fill((0,0,0))
-        start_text = font.render(text, True, text_color)
-        text_rect = start_text.get_rect(center = (WIDTH // 2, HEIGHT // 2))
-        window.blit(start_text, text_rect)
+
 
 def get_background(name):
     image = pygame.image.load(join("assets", "Background", name))
@@ -287,16 +277,14 @@ def draw(window, background, bg_image, player, shotgun, bullets, start_screen, c
     text_rect = score_text.get_rect(topright = (WIDTH - 10, 10))
     window.blit(score_text, text_rect)
     
-    draw_start_screen(window, start_screen, "Press SPACE to start", (255, 255, 255))
-    
     if start_screen:
+        window.fill((15, 26, 32))
         if controller_button.draw(window):
             player.game_mode = "controller"
         if mouse_button.draw(window):
             player.game_mode = "mouse"
     
     pygame.display.update()
-
 
 def main(window):
     clock = pygame.time.Clock()
@@ -308,7 +296,6 @@ def main(window):
     global score
     score = 0
     start_screen = True
-    count = 0
     
     player = Player(100, 100, 50, 50)
     shotgun = Shotgun(player.rect.x, player.rect.y, 50, 50)
@@ -334,14 +321,11 @@ def main(window):
                 if event.key == pygame.K_SPACE and player.bullet_count > 0 or event.key == pygame.K_UP and player.bullet_count > 0:
                     #player.jump()
                     player.shoot()
-                
-                if event.key == pygame.K_SPACE:
-                    #print(player.draw_bullet_count())
-                    start_screen = False
-                    if count < 1:
-                        player.reset()
-                    count += 1
-            
+
+        if controller_button.draw(window) or mouse_button.draw(window):
+            start_screen = False
+            player.reset()
+                 
         player.loop(FPS)
         shotgun.loop(player.rect, offset_x, offset_y)
         handle_border(player)
