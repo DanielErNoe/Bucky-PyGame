@@ -17,7 +17,8 @@ FPS = 60
 PLAYER_VEL = 7
 
 window = pygame.display.set_mode((WIDTH, HEIGHT))
-font = pygame.font.Font(None, 36)
+#font = pygame.font.Font(None, 36)
+font = pygame.font.SysFont("Futura", 36)
 
 
 def load_sprite_sheets(dir1, dir2, width, height, direction=False):
@@ -86,6 +87,24 @@ class Player(pygame.sprite.Sprite):
 
         #print(PLAYER_VEL * math.cos(math.radians(angle)), PLAYER_VEL * math.sin(math.radians(angle)) * -1, angle, self.rect.x, player_pos)
 
+    def reset(self):
+        self.fall_count = 0
+        self.x_vel *= 0.1
+        self.y_vel = 0
+        self.rect.x = WIDTH // 2
+        self.rect.y = HEIGHT // 2
+        global score
+        score = 0
+        self.bullet_count = 3
+    
+    def draw_bullet_count(self, win):
+        font_size = 64
+        font = pygame.font.SysFont("Futura", font_size)
+        bullet_text = font.render(str(self.bullet_count), True, (255, 255, 255))
+        bullet_text_x = (WIDTH - bullet_text.get_width()) // 2
+        bullet_text_y = (HEIGHT - bullet_text.get_height()) // 2
+        win.blit(bullet_text, (bullet_text_x, bullet_text_y))
+    
     def move(self, dx, dy):
         self.rect.x += dx
         self.rect.y += dy
@@ -183,7 +202,8 @@ class Bullet():
             
     def draw(self, win):
         win.blit(self.SPRITE, (self.rect))
-        
+
+      
 
 def handle_border(player):
     if player.rect.x > WIDTH:
@@ -191,13 +211,21 @@ def handle_border(player):
         
     if player.rect.x < 0:
         player.rect.x = WIDTH
+    
+    if player.rect.y > HEIGHT or player.rect.y < 0:
+        player.reset()
         
 
 def handle_score():
     global score
     score += 1
     
-
+def draw_start_screen(window, start_screen, text, text_color):
+    if start_screen:
+        window.fill((0,0,0))
+        start_text = font.render(text, True, text_color)
+        text_rect = start_text.get_rect(center = (WIDTH // 2, HEIGHT // 2))
+        window.blit(start_text, text_rect)
 
 def get_background(name):
     image = pygame.image.load(join("assets", "Background", name))
@@ -212,19 +240,23 @@ def get_background(name):
     return tiles, image
         
         
-def draw(window, background, bg_image, player, shotgun, bullets):
+def draw(window, background, bg_image, player, shotgun, bullets, start_screen):
     for tile in background:
         window.blit(bg_image, tile)
         
     for Bullet in bullets:
         Bullet.draw(window)
 
+    player.draw_bullet_count(window)
+    
     player.draw(window)
     shotgun.draw(window)
     
     score_text = font.render(f"Score: {str(score)}", True, (255, 255, 255))
     text_rect = score_text.get_rect(topright = (WIDTH - 10, 10))
     window.blit(score_text, text_rect)
+    
+    draw_start_screen(window, start_screen, "Press SPACE to start", (255, 255, 255))
     
     pygame.display.update()
 
@@ -238,6 +270,8 @@ def main(window):
     bullet_amount = 2
     global score
     score = 0
+    start_screen = True
+    count = 0
     
     player = Player(100, 100, 50, 50)
     shotgun = Shotgun(player.rect.x, player.rect.y, 50, 50)
@@ -258,16 +292,29 @@ def main(window):
                 if event.key == pygame.K_SPACE and player.bullet_count > 0 or event.key == pygame.K_UP and player.bullet_count > 0:
                     #player.jump()
                     player.shoot()
-        
+                
+                if event.key == pygame.K_SPACE:
+                    #print(player.draw_bullet_count())
+                    start_screen = False
+                    if count < 1:
+                        player.reset()
+                    count += 1
+            
         player.loop(FPS)
         shotgun.loop(player.rect, offset_x, offset_y)
         handle_border(player)
         bullets = bullet.handle_bullets(bullet_amount, bullet_size, player, bullet, bullets)
         #shotgun.rotate_sprite(player.angle)
-        draw(window, background, bg_image, player, shotgun, bullets)
+        draw(window, background, bg_image, player, shotgun, bullets, start_screen)
         #print(f"score: {score}")
-        
-        
+
+        # if start_screen:
+        #     start_text = font.render("Press SPACE to start", True, (255, 255, 255))
+        #     text_rect = start_text.get_rect(topright = (WIDTH - 100, 100))
+        #     window.blit(start_text, text_rect)
+        #     pygame.display.update()
+            
+            
     pygame.quit()
     quit()
 
