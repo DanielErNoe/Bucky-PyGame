@@ -61,6 +61,7 @@ class Player(pygame.sprite.Sprite):
         self.start_time = time.time()
         self.angle = 0
         self.game_mode = "none"
+        self.values = 0
 
     def jump(self):
         self.y_vel = -self.GRAVITY * 8
@@ -86,8 +87,13 @@ class Player(pygame.sprite.Sprite):
             self.bullet_count -= 1
 
         elif self.game_mode == "controller":
-            values = read_data()
-            print(values)
+            self.values = read_data()
+            angle = math.degrees(math.atan2(self.values[1], self.values[0]))
+
+            self.x_vel = PLAYER_VEL * math.cos(math.radians(angle))
+            self.y_vel = PLAYER_VEL * math.sin(math.radians(angle))
+            
+            self.bullet_count -= 1
 
         #print(self.game_mode)
         #print(PLAYER_VEL * math.cos(math.radians(angle)), PLAYER_VEL * math.sin(math.radians(angle)) * -1, angle, self.rect.x, player_pos)
@@ -340,7 +346,10 @@ def main(window):
         # if controller_button.draw(window) or mouse_button.draw(window):
         #     start_screen = False
         #     player.reset()
-                 
+
+        if player.values[2] == 1 and player.bullet_count > 0:
+            player.shoot()
+
         player.loop(FPS)
         shotgun.loop(player.rect, offset_x, offset_y)
         handle_border(player)
