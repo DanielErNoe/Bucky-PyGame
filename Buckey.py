@@ -5,7 +5,7 @@ import math
 import time
 from os import listdir
 from os.path import isfile, join
-#from Controller import readSerial
+from ControllerSerial import read_data
 
 
 pygame.init()
@@ -60,7 +60,7 @@ class Player(pygame.sprite.Sprite):
         self.bullet_count = 3
         self.start_time = time.time()
         self.angle = 0
-        self.game_mode = "mouse"
+        self.game_mode = "none"
 
     def jump(self):
         self.y_vel = -self.GRAVITY * 8
@@ -70,19 +70,24 @@ class Player(pygame.sprite.Sprite):
             self.fall_count = 0  
 
     def shoot(self):
-        mouse_pos = pygame.mouse.get_pos()
-        player_pos = [self.rect.x - self.rect.width // 2, self.rect.y - self.rect.height // 2]
+        if self.game_mode == "mouse":
+            mouse_pos = pygame.mouse.get_pos()
+            player_pos = [self.rect.x - self.rect.width // 2, self.rect.y - self.rect.height // 2]
 
-        DeltaX = mouse_pos[0] - player_pos[0]
-        DeltaY = player_pos[1] - mouse_pos[1]
+            DeltaX = mouse_pos[0] - player_pos[0]
+            DeltaY = player_pos[1] - mouse_pos[1]
 
-        angle = math.degrees(math.atan2(DeltaY, DeltaX))
-        self.angle = angle
-        
-        self.x_vel = PLAYER_VEL * math.cos(math.radians(angle))
-        self.y_vel = -PLAYER_VEL * math.sin(math.radians(angle))
-        
-        self.bullet_count -= 1
+            angle = math.degrees(math.atan2(DeltaY, DeltaX))
+            self.angle = angle
+            
+            self.x_vel = PLAYER_VEL * math.cos(math.radians(angle))
+            self.y_vel = -PLAYER_VEL * math.sin(math.radians(angle))
+            
+            self.bullet_count -= 1
+
+        elif self.game_mode == "controller":
+            values = read_data()
+            print(values)
 
         #print(self.game_mode)
         #print(PLAYER_VEL * math.cos(math.radians(angle)), PLAYER_VEL * math.sin(math.radians(angle)) * -1, angle, self.rect.x, player_pos)
@@ -225,7 +230,7 @@ class Button():
             self.clicked = False
 
         win.blit(self.image, (self.rect.x, self.rect.y))
-
+        #print(action)
         return action
     
 def get_button(name):
@@ -273,7 +278,7 @@ def draw(window, background, bg_image, player, shotgun, bullets, start_screen, c
     player.draw(window)
     shotgun.draw(window)
     
-    score_text = font.render(f"Score: {str(score)}", True, (255, 255, 255))
+    score_text = font.render(str(score), True, (255, 255, 255))
     text_rect = score_text.get_rect(topright = (WIDTH - 10, 10))
     window.blit(score_text, text_rect)
     
@@ -281,16 +286,22 @@ def draw(window, background, bg_image, player, shotgun, bullets, start_screen, c
         window.fill((15, 26, 32))
         if controller_button.draw(window):
             player.game_mode = "controller"
+            start_screen = False
+            player.reset()
         if mouse_button.draw(window):
             player.game_mode = "mouse"
+            start_screen = False
+            player.reset()
         if exit_button.draw(window):
             pygame.quit()
-    
+
     pygame.display.update()
+
+    return start_screen
 
 def main(window):
     clock = pygame.time.Clock()
-    background, bg_image = get_background("Blue.png")
+    background, bg_image = get_background("Nightly.png")
 
     offset_x, offset_y = 25, 22
     bullet_size = 40
@@ -326,16 +337,16 @@ def main(window):
                     #player.jump()
                     player.shoot()
 
-        if controller_button.draw(window) or mouse_button.draw(window):
-            start_screen = False
-            player.reset()
+        # if controller_button.draw(window) or mouse_button.draw(window):
+        #     start_screen = False
+        #     player.reset()
                  
         player.loop(FPS)
         shotgun.loop(player.rect, offset_x, offset_y)
         handle_border(player)
         bullets = bullet.handle_bullets(bullet_amount, bullet_size, player, bullet, bullets)
         #shotgun.rotate_sprite(player.angle)
-        draw(window, background, bg_image, player, shotgun, bullets, start_screen, controller_button, mouse_button, exit_button)
+        start_screen = draw(window, background, bg_image, player, shotgun, bullets, start_screen, controller_button, mouse_button, exit_button)
         #print(f"score: {score}")
 
         # if start_screen:
